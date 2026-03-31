@@ -19,35 +19,36 @@
 <body>
     <div class="container">
         <h1>Smart Irrigation System</h1>
-        <p>Enter your farm details to get irrigation advice for Sugarcane</p>
+        <p>Enter your farm details to get irrigation advice for Sugarcane /
+           गन्ने की सिंचाई के लिए सलाह प्राप्त करने हेतु अपने खेत का विवरण दर्ज करें</p>
 
         <form action="/predict" method="POST">
             <!-- Location -->
-            <label for="location" class="farm-label">Location:</label>
-            <input type="text" id="location" name="location" value="Nagpur" required>
+            <label for="location" class="farm-label">Location / स्थान:</label>
+            <input type="text" id="location" name="location" value="Nagpur / नागपुर" required>
 
             <!-- Soil Type -->
-            <label for="soil_type" class="farm-label">Soil Type:</label>
+            <label for="soil_type" class="farm-label">Soil Type / मिट्टी का प्रकार:</label>
             <select id="soil_type" name="soil_type">
-                <option value="1">Black Soil</option>
-                <option value="2">Clay Soil</option>
-                <option value="3">Sandy Soil</option>
+                <option value="1">Black Soil / काली मिट्टी</option>
+                <option value="2">Clay Soil / चिकनी मिट्टी</option>
+                <option value="3">Sandy Soil / रेतीली मिट्टी</option>
             </select>
 
             <!-- Crop Stage -->
-            <label for="crop_stage" class="farm-label">Crop Stage:</label>
+            <label for="crop_stage" class="farm-label">Crop Stage / फसल की अवस्था:</label>
             <select id="crop_stage" name="crop_stage">
-                <option value="1">Seedling</option>
-                <option value="2">Middle</option>
-                <option value="3">Mature</option>
+                <option value="1">Seedling / नवांकुर</option>
+                <option value="2">Middle / मध्य</option>
+                <option value="3">Mature / परिपक्व</option>
             </select>
 
             <!-- Field Size -->
-            <label for="field_size" class="farm-label">Field Size (acres):</label>
+            <label for="field_size" class="farm-label">Field Size (acres) / खेत का आकार (एकड़):</label>
             <input type="number" id="field_size" name="field_size" step="0.1">
 
             <!-- Submit Button -->
-            <input type="submit" value="Get Irrigation Advice">
+            <input type="submit" value="Get Irrigation Advice / सिंचाई सलाह प्राप्त करें">
         </form>
     </div>
 </body>
