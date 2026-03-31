@@ -1,6 +1,4 @@
-🌐 Live Demo -
-[![Live Demo](https://img.shields.io/badge/Live-Demo-green?style=for-the-badge&logo=render)](https://smart-water-irrigation-zq81.onrender.com)
-
+🌐 Live Demo - https://smart-water-irrigation-zq81.onrender.com
 Smart Irrigation System using Machine Learning
 
 Project Overview :
