@@ -8,7 +8,105 @@
 <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 
 <style>
-/* (your existing CSS unchanged) */
+
+/* Background */
+body{
+background-image:url("{{ url_for('static', filename='photo.jpg') }}");
+background-size:cover;
+background-position:center;
+margin:0;
+font-family:Arial;
+height:100vh;
+color:white;
+}
+
+/* PAGE TITLE */
+.page-title{
+position:absolute;
+top:40px;
+left:50%;
+transform:translateX(-50%);
+font-size:52px;
+font-weight:800;
+letter-spacing:3px;
+text-shadow:0 0 15px rgba(255,255,255,0.9);
+}
+
+/* DASHBOARD LAYOUT */
+.dashboard{
+display:flex;
+justify-content:center;
+align-items:center;
+gap:100px;
+height:100vh;
+}
+
+/* RESULT BOX (TODAY DATA) */
+.result-box{
+width:500px;
+height:520px;
+background:rgba(255,255,255,0.20);
+backdrop-filter:blur(15px);
+border-radius:25px;
+padding:40px;
+text-align:center;
+box-shadow:0 15px 45px rgba(0,0,0,0.5);
+}
+
+/* WEEKLY TABLE BOX */
+.week-box{
+width:500px;
+height:520px;
+background:rgba(255,255,255,0.15);
+backdrop-filter:blur(15px);
+border-radius:25px;
+padding:35px;
+box-shadow:0 15px 45px rgba(0,0,0,0.5);
+}
+
+/* TABLE */
+.week-table{
+width:100%;
+border-collapse:collapse;
+margin-top:15px;
+}
+.week-table th,
+.week-table td{
+border:1px solid rgba(255,255,255,0.3);
+padding:10px;
+text-align:center;
+}
+.week-table th{
+background:rgba(0,0,0,0.4);
+}
+
+/* IRRIGATION TEXT */
+.irrigation-red{
+color:#ff4c4c;
+font-size:26px;
+font-weight:bold;
+}
+.irrigation-yellow{
+color:#ffd84d;
+font-size:26px;
+font-weight:bold;
+}
+.irrigation-green{
+color:#4cff7a;
+font-size:26px;
+font-weight:bold;
+}
+
+/* BACK BUTTON */
+.back-btn{
+position:absolute;
+bottom:25px;
+left:25px;
+color:white;
+font-size:18px;
+text-decoration:none;
+}
+
 </style>
 
 </head>
