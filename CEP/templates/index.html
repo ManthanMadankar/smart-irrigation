@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Smart Irrigation System</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <style>
+        /* Background image using Flask's url_for */
+        body {
+            background-image: url("{{ url_for('static', filename='photo.jpg') }}");
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            margin: 0;
+            padding: 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Smart Irrigation System</h1>
+        <p>Enter your farm details to get irrigation advice for Sugarcane</p>
+
+        <form action="/predict" method="POST">
+            <!-- Location -->
+            <label for="location" class="farm-label">Location:</label>
+            <input type="text" id="location" name="location" value="Nagpur" required>
+
+            <!-- Soil Type -->
+            <label for="soil_type" class="farm-label">Soil Type:</label>
+            <select id="soil_type" name="soil_type">
+                <option value="1">Black Soil</option>
+                <option value="2">Clay Soil</option>
+                <option value="3">Sandy Soil</option>
+            </select>
+
+            <!-- Crop Stage -->
+            <label for="crop_stage" class="farm-label">Crop Stage:</label>
+            <select id="crop_stage" name="crop_stage">
+                <option value="1">Seedling</option>
+                <option value="2">Middle</option>
+                <option value="3">Mature</option>
+            </select>
+
+            <!-- Field Size -->
+            <label for="field_size" class="farm-label">Field Size (acres):</label>
+            <input type="number" id="field_size" name="field_size" step="0.1">
+
+            <!-- Submit Button -->
+            <input type="submit" value="Get Irrigation Advice">
+        </form>
+    </div>
+</body>
+</html>
