@@ -7,10 +7,12 @@ import os
 
 app = Flask(__name__)
 
+# Load model safely
 model_path = os.path.join(os.path.dirname(__file__), 'irrigation_model.pkl')
 with open(model_path, 'rb') as f:
     model = pickle.load(f)
 
+# API key from environment or fallback
 API_KEY = os.environ.get("OPENWEATHER_API_KEY", "4ad5dac7e80eaae2c8fee266fa35043e")
 
 def get_weather(city):
@@ -21,7 +23,8 @@ def get_weather(city):
         temperature = data["main"]["temp"]
         humidity = data["main"]["humidity"]
         rainfall = data.get("rain", {}).get("1h", 0)
-    except KeyError:
+    except (KeyError, TypeError):
+        # fallback defaults
         temperature, humidity, rainfall = 30, 60, 0
     return temperature, humidity, rainfall
 
@@ -31,8 +34,8 @@ def get_forecast(city):
     data = response.json()
 
     forecast_days = []
-    for item in data.get("list", []):
-        if "12:00:00" in item["dt_txt"]:
+    for item in data.get("list", []):   # safe access
+        if "12:00:00" in item.get("dt_txt", ""):
             date_str = item["dt_txt"].split(" ")[0]
             day_name = datetime.strptime(date_str, "%Y-%m-%d").strftime("%A")
             temp = item["main"]["temp"]
@@ -90,10 +93,14 @@ def predict():
         if i < len(forecast_weather):
             day_data = forecast_weather[i]
         else:
-            last_day = forecast_weather[-1]
-            temp = last_day["temp"] + np.random.randint(-2, 3)
-            hum = max(0, min(100, last_day["humidity"] + np.random.randint(-5, 6)))
-            rain = max(0, last_day["rainfall"] + np.random.randint(0, 3))
+            # fallback if forecast is empty
+            if forecast_weather:
+                last_day = forecast_weather[-1]
+                temp = last_day["temp"] + np.random.randint(-2, 3)
+                hum = max(0, min(100, last_day["humidity"] + np.random.randint(-5, 6)))
+                rain = max(0, last_day["rainfall"] + np.random.randint(0, 3))
+            else:
+                temp, hum, rain = temperature, humidity, rainfall
             day_data = {"day": "", "temp": temp, "humidity": hum, "rainfall": rain}
 
         day_name = (today_date + timedelta(days=i)).strftime("%A")
