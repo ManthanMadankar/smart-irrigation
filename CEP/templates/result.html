@@ -1,15 +1,17 @@
 <!DOCTYPE html>
+
 <html lang="en">
 
 <head>
 <meta charset="UTF-8">
-<title>Smart Irrigation Result / स्मार्ट सिंचाई परिणाम</title>
+<title>Smart Irrigation Result</title>
 
 <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 
 <style>
 
 /* Background */
+
 body{
 background-image:url("{{ url_for('static', filename='photo.jpg') }}");
 background-size:cover;
@@ -20,7 +22,9 @@ height:100vh;
 color:white;
 }
 
+
 /* PAGE TITLE */
+
 .page-title{
 position:absolute;
 top:40px;
@@ -32,7 +36,9 @@ letter-spacing:3px;
 text-shadow:0 0 15px rgba(255,255,255,0.9);
 }
 
+
 /* DASHBOARD LAYOUT */
+
 .dashboard{
 display:flex;
 justify-content:center;
@@ -41,63 +47,84 @@ gap:100px;
 height:100vh;
 }
 
+
 /* RESULT BOX (TODAY DATA) */
+
 .result-box{
 width:500px;
 height:520px;
+
 background:rgba(255,255,255,0.20);
 backdrop-filter:blur(15px);
+
 border-radius:25px;
 padding:40px;
+
 text-align:center;
+
 box-shadow:0 15px 45px rgba(0,0,0,0.5);
 }
 
+
 /* WEEKLY TABLE BOX */
+
 .week-box{
 width:500px;
 height:520px;
+
 background:rgba(255,255,255,0.15);
 backdrop-filter:blur(15px);
+
 border-radius:25px;
 padding:35px;
+
 box-shadow:0 15px 45px rgba(0,0,0,0.5);
 }
 
+
 /* TABLE */
+
 .week-table{
 width:100%;
 border-collapse:collapse;
 margin-top:15px;
 }
+
 .week-table th,
 .week-table td{
 border:1px solid rgba(255,255,255,0.3);
 padding:10px;
 text-align:center;
 }
+
 .week-table th{
 background:rgba(0,0,0,0.4);
 }
 
+
 /* IRRIGATION TEXT */
+
 .irrigation-red{
 color:#ff4c4c;
 font-size:26px;
 font-weight:bold;
 }
+
 .irrigation-yellow{
 color:#ffd84d;
 font-size:26px;
 font-weight:bold;
 }
+
 .irrigation-green{
 color:#4cff7a;
 font-size:26px;
 font-weight:bold;
 }
 
+
 /* BACK BUTTON */
+
 .back-btn{
 position:absolute;
 bottom:25px;
@@ -114,80 +141,94 @@ text-decoration:none;
 <body>
 
 <!-- PAGE TITLE -->
+
 <div class="page-title">
-Smart Irrigation Result / स्मार्ट सिंचाई परिणाम
+Smart Irrigation Result
 </div>
 
 <div class="dashboard">
 
 <!-- TODAY RESULT -->
+
 <div class="result-box">
 
-<h3>Location / स्थान: {{ location }}</h3>
+<h3>Location: {{ location }}</h3>
 
-<p><strong>Temperature / तापमान:</strong> {{ temperature }} °C</p>
-<p><strong>Humidity / आर्द्रता:</strong> {{ humidity }} %</p>
-<p><strong>Rainfall / वर्षा:</strong> {{ rainfall }} mm</p>
+<p><strong>Temperature:</strong> {{ temperature }} °C</p>
+<p><strong>Humidity:</strong> {{ humidity }} %</p>
+<p><strong>Rainfall:</strong> {{ rainfall }} mm</p>
 
-<p><strong>Soil Type / मिट्टी का प्रकार:</strong>
+<p><strong>Soil Type:</strong>
 {% if soil_type == 1 %}
-Black Soil / काली मिट्टी
+Black Soil
 {% elif soil_type == 2 %}
-Clay Soil / चिकनी मिट्टी
+Clay Soil
 {% else %}
-Sandy Soil / रेतीली मिट्टी
+Sandy Soil
 {% endif %}
 </p>
 
-<p><strong>Crop Stage / फसल की अवस्था:</strong>
+<p><strong>Crop Stage:</strong>
 {% if crop_stage == 1 %}
-Seedling / नवांकुर
+Seedling
 {% elif crop_stage == 2 %}
-Middle Stage / मध्य अवस्था
+Middle Stage
 {% else %}
-Mature Stage / परिपक्व अवस्था
+Mature Stage
 {% endif %}
 </p>
 
 <!-- IRRIGATION RESULT -->
+
 {% if irrigation == 1 %}
-<h2 class="irrigation-red">Irrigation Required Today / आज सिंचाई आवश्यक</h2>
+
+<h2 class="irrigation-red">Irrigation Required Today</h2>
+
 {% elif irrigation == 0 and humidity < 40 %}
-<h2 class="irrigation-yellow">Irrigation Recommended Soon / शीघ्र सिंचाई की सिफारिश</h2>
+
+<h2 class="irrigation-yellow">Irrigation Recommended Soon</h2>
+
 {% else %}
-<h2 class="irrigation-green">No Irrigation Needed / सिंचाई की आवश्यकता नहीं</h2>
+
+<h2 class="irrigation-green">No Irrigation Needed</h2>
+
 {% endif %}
 
-<p><strong>Water Needed Today / आज आवश्यक पानी:</strong> {{ water_needed }} Litres</p>
+<p><strong>Water Needed Today:</strong> {{ water_needed }} Litres</p>
 
 </div>
 
 <!-- WEEKLY TABLE -->
+
 <div class="week-box">
 
-<h3 style="text-align:center;">Next 6 Day Irrigation Plan / अगले 6 दिन की सिंचाई योजना</h3>
+<h3 style="text-align:center;">Next 6 Day Irrigation Plan</h3>
 
 <table class="week-table">
+
 <tr>
-<th>Day / दिन</th>
-<th>Irrigation / सिंचाई</th>
-<th>Water / पानी</th>
+<th>Day</th>
+<th>Irrigation</th>
+<th>Water</th>
 </tr>
 
 {% for day in week_prediction[1:] %}
+
 <tr>
 <td>{{day.day}}</td>
 <td>{{day.irrigation}}</td>
 <td>{{day.water}} L</td>
 </tr>
+
 {% endfor %}
+
 </table>
 
 </div>
 
 </div>
 
-<a href="/" class="back-btn">← Back / वापस</a>
+<a href="/" class="back-btn">← Back</a>
 
 </body>
 </html>
