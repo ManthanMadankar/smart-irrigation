@@ -3,12 +3,15 @@ import pickle
 import numpy as np
 import requests
 from datetime import datetime, timedelta, date
+import os
 
 app = Flask(__name__)
 
-model = pickle.load(open('irrigation_model.pkl', 'rb'))
+model_path = os.path.join(os.path.dirname(__file__), 'irrigation_model.pkl')
+with open(model_path, 'rb') as f:
+    model = pickle.load(f)
 
-API_KEY = "4ad5dac7e80eaae2c8fee266fa35043e"
+API_KEY = os.environ.get("OPENWEATHER_API_KEY", "4ad5dac7e80eaae2c8fee266fa35043e")
 
 def get_weather(city):
     url = f"https://api.openweathermap.org/data/2.5/weather?q={city}&appid={API_KEY}&units=metric"
@@ -18,10 +21,8 @@ def get_weather(city):
         temperature = data["main"]["temp"]
         humidity = data["main"]["humidity"]
         rainfall = data.get("rain", {}).get("1h", 0)
-    except:
-        temperature = 30
-        humidity = 60
-        rainfall = 0
+    except KeyError:
+        temperature, humidity, rainfall = 30, 60, 0
     return temperature, humidity, rainfall
 
 def get_forecast(city):
@@ -30,8 +31,7 @@ def get_forecast(city):
     data = response.json()
 
     forecast_days = []
-    for item in data["list"]:
-        # pick midday weather
+    for item in data.get("list", []):
         if "12:00:00" in item["dt_txt"]:
             date_str = item["dt_txt"].split(" ")[0]
             day_name = datetime.strptime(date_str, "%Y-%m-%d").strftime("%A")
@@ -44,7 +44,6 @@ def get_forecast(city):
                 "humidity": humidity,
                 "rainfall": rainfall
             })
-        # limit to max 8 days
         if len(forecast_days) == 8:
             break
     return forecast_days
@@ -64,7 +63,7 @@ def predict():
     features = np.array([[temperature, humidity, rainfall, soil_type, crop_stage]])
     irrigation_pred = model.predict(features)[0]
 
-    # water per acre
+    # Water per acre logic
     if crop_stage == 1:
         water_per_acre = 300
     elif crop_stage == 2:
@@ -72,7 +71,7 @@ def predict():
     else:
         water_per_acre = 400
 
-    # TODAY DECISION
+    # Today’s irrigation decision
     if irrigation_pred == 1 or (humidity < 35 and rainfall < 5):
         alert = "Irrigation Required Today"
         water_needed = round(water_per_acre * field_size, 2)
@@ -88,39 +87,34 @@ def predict():
 
     week_prediction = []
     for i in range(7):
-        
         if i < len(forecast_weather):
             day_data = forecast_weather[i]
         else:
-            
             last_day = forecast_weather[-1]
-            temp = last_day["temp"] + np.random.randint(-2, 3)  # +/- 2°C
-            hum = max(0, min(100, last_day["humidity"] + np.random.randint(-5, 6)))  # ±5%
-            rain = max(0, last_day["rainfall"] + np.random.randint(0, 3))  # 0-2 mm variation
+            temp = last_day["temp"] + np.random.randint(-2, 3)
+            hum = max(0, min(100, last_day["humidity"] + np.random.randint(-5, 6)))
+            rain = max(0, last_day["rainfall"] + np.random.randint(0, 3))
             day_data = {"day": "", "temp": temp, "humidity": hum, "rainfall": rain}
 
         day_name = (today_date + timedelta(days=i)).strftime("%A")
-
-        temp = day_data["temp"]
-        hum = day_data["humidity"]
-        rain = day_data["rainfall"]
+        temp, hum, rain = day_data["temp"], day_data["humidity"], day_data["rainfall"]
 
         features = np.array([[temp, hum, rain, soil_type, crop_stage]])
         irrigation = model.predict(features)[0]
+
         if crop_stage == 1:
             base_water = 300
         elif crop_stage == 2:
             base_water = 500
         else:
             base_water = 400
+
         temp_factor = (temp - 25) * 8
         humidity_factor = hum * 2
         rain_factor = rain * 10
 
         water = base_water + temp_factor - humidity_factor - rain_factor
-        if water < 0:
-            water = 0
-        water = round(water * field_size, 2)
+        water = max(0, round(water * field_size, 2))
 
         if irrigation == 1:
             irrigation_status = "Irrigation Required"
@@ -152,7 +146,6 @@ def predict():
         week_prediction=week_prediction
     )
 
-import os
 if __name__ == '__main__':
     port = int(os.environ.get("PORT", 5000))
     app.run(host='0.0.0.0', port=port)
