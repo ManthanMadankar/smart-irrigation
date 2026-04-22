@@ -166,12 +166,18 @@ def predict():
                 "water": water
             })
 
+        
         # ===== GRAPH =====
         import matplotlib.pyplot as plt
 
-        static_dir = os.path.join(os.getcwd(), "static")
+        # Use BASE DIR (important for Render)
+        BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+
+        # Ensure static folder exists
+        static_dir = os.path.join(BASE_DIR, "static")
         os.makedirs(static_dir, exist_ok=True)
 
+        # Absolute path for saving
         graph_path = os.path.join(static_dir, "water_graph.png")
 
         days = [d["day"] for d in week_prediction]
@@ -182,7 +188,9 @@ def predict():
         plt.title("6-Day Irrigation Water Requirement")
         plt.xticks(rotation=30)
         plt.grid()
-        plt.savefig(graph_path)
+
+        #  Important fix
+        plt.savefig(graph_path, bbox_inches='tight')
         plt.close()
 
         return render_template(
