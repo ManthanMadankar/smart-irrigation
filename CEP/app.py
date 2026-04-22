@@ -8,7 +8,9 @@ import os
 app = Flask(__name__)
 app.secret_key = "smartirrigate_secret"  # needed for session
 
-model = pickle.load(open('irrigation_model.pkl', 'rb'))
+model_path = os.path.join(os.path.dirname(__file__), 'irrigation_model.pkl')
+model = pickle.load(open(model_path, 'rb'))
+
 
 API_KEY = "4ad5dac7e80eaae2c8fee266fa35043e"
 
