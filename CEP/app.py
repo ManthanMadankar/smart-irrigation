@@ -12,6 +12,9 @@ matplotlib.use('Agg')
 # Excel in memory
 from io import BytesIO
 from openpyxl import Workbook
+from openpyxl.styles import Font, PatternFill, Alignment, Border, Side
+from openpyxl.utils import get_column_letter
+from openpyxl.drawing.image import Image as XLImage
 
 app = Flask(__name__)
 app.secret_key = "smartirrigate_secret"
@@ -197,7 +200,13 @@ def predict():
         session['excel_data'] = {
             "alert": alert,
             "water_needed": water_needed,
-            "week_prediction": week_prediction
+            "week_prediction": week_prediction,
+            "location": location,
+            "temperature": temperature,
+            "humidity": humidity,
+            "rainfall": rainfall,
+            "soil_type": soil_type,
+            "crop_stage": crop_stage,
         }
 
         return render_template(
@@ -221,49 +230,249 @@ def predict():
 
 # ================= EXCEL DOWNLOAD =================
 
+# Translation dictionaries
+TRANSLATIONS = {
+    "en": {
+        "title": "Smart Irrigation Report",
+        "generated": "Generated on",
+        "location": "Location",
+        "temperature": "Temperature (°C)",
+        "humidity": "Humidity (%)",
+        "rainfall": "Rainfall (mm)",
+        "soil_type": "Soil Type",
+        "crop_stage": "Crop Stage",
+        "today_status": "Today's Status",
+        "water_today": "Water Needed Today (Litres)",
+        "week_plan": "7-Day Irrigation Plan",
+        "day": "Day",
+        "irrigation": "Irrigation Status",
+        "water": "Water Required (Litres)",
+        "graph_title": "Water Requirement Graph",
+        "soils": {1: "Black Soil", 2: "Clay Soil", 3: "Sandy Soil"},
+        "stages": {1: "Seedling", 2: "Middle Stage", 3: "Mature Stage"},
+        "irr_required": "Irrigation Required",
+        "no_irr": "No Irrigation",
+        "days": {
+            "Monday": "Monday", "Tuesday": "Tuesday", "Wednesday": "Wednesday",
+            "Thursday": "Thursday", "Friday": "Friday", "Saturday": "Saturday", "Sunday": "Sunday"
+        }
+    },
+    "hi": {
+        "title": "स्मार्ट सिंचाई रिपोर्ट",
+        "generated": "तैयार किया गया",
+        "location": "स्थान",
+        "temperature": "तापमान (°C)",
+        "humidity": "आर्द्रता (%)",
+        "rainfall": "वर्षा (mm)",
+        "soil_type": "मिट्टी का प्रकार",
+        "crop_stage": "फसल अवस्था",
+        "today_status": "आज की स्थिति",
+        "water_today": "आज आवश्यक पानी (लीटर)",
+        "week_plan": "7 दिन की सिंचाई योजना",
+        "day": "दिन",
+        "irrigation": "सिंचाई स्थिति",
+        "water": "आवश्यक पानी (लीटर)",
+        "graph_title": "पानी की आवश्यकता ग्राफ",
+        "soils": {1: "काली मिट्टी", 2: "चिकनी मिट्टी", 3: "रेतीली मिट्टी"},
+        "stages": {1: "अंकुर अवस्था", 2: "मध्य अवस्था", 3: "परिपक्व अवस्था"},
+        "irr_required": "सिंचाई आवश्यक",
+        "no_irr": "सिंचाई नहीं",
+        "days": {
+            "Monday": "सोमवार", "Tuesday": "मंगलवार", "Wednesday": "बुधवार",
+            "Thursday": "गुरुवार", "Friday": "शुक्रवार", "Saturday": "शनिवार", "Sunday": "रविवार"
+        }
+    },
+    "mr": {
+        "title": "स्मार्ट सिंचन अहवाल",
+        "generated": "तयार केले",
+        "location": "स्थान",
+        "temperature": "तापमान (°C)",
+        "humidity": "आर्द्रता (%)",
+        "rainfall": "पाऊस (mm)",
+        "soil_type": "मातीचा प्रकार",
+        "crop_stage": "पिकाची अवस्था",
+        "today_status": "आजची स्थिती",
+        "water_today": "आज लागणारे पाणी (लिटर)",
+        "week_plan": "७ दिवसांचे सिंचन नियोजन",
+        "day": "दिवस",
+        "irrigation": "सिंचन स्थिती",
+        "water": "आवश्यक पाणी (लिटर)",
+        "graph_title": "पाण्याची गरज ग्राफ",
+        "soils": {1: "काळी माती", 2: "चिकण माती", 3: "वालुकामय माती"},
+        "stages": {1: "रोप अवस्था", 2: "मध्य अवस्था", 3: "परिपक्व अवस्था"},
+        "irr_required": "सिंचन आवश्यक",
+        "no_irr": "सिंचन नाही",
+        "days": {
+            "Monday": "सोमवार", "Tuesday": "मंगळवार", "Wednesday": "बुधवार",
+            "Thursday": "गुरुवार", "Friday": "शुक्रवार", "Saturday": "शनिवार", "Sunday": "रविवार"
+        }
+    }
+}
+
+def make_border():
+    side = Side(style='thin', color='CCCCCC')
+    return Border(left=side, right=side, top=side, bottom=side)
+
+def style_header_cell(cell, bg_color="2E7D32", font_color="FFFFFF"):
+    cell.font = Font(name='Arial', bold=True, color=font_color, size=11)
+    cell.fill = PatternFill("solid", start_color=bg_color)
+    cell.alignment = Alignment(horizontal='center', vertical='center', wrap_text=True)
+    cell.border = make_border()
+
+def style_data_cell(cell, bold=False, bg_color=None, font_color="000000", align="center"):
+    cell.font = Font(name='Arial', bold=bold, color=font_color, size=10)
+    if bg_color:
+        cell.fill = PatternFill("solid", start_color=bg_color)
+    cell.alignment = Alignment(horizontal=align, vertical='center', wrap_text=True)
+    cell.border = make_border()
+
+
 @app.route('/download_excel')
 def download_excel():
     try:
         data = session.get('excel_data')
-
         if not data:
             return "Session expired. Please try again.", 400
 
+        lang = request.args.get('lang', 'en')
+        if lang not in TRANSLATIONS:
+            lang = 'en'
+        t = TRANSLATIONS[lang]
+
         wb = Workbook()
         ws = wb.active
-        ws.title = "Irrigation Report"
+        ws.title = t["title"][:31]
 
-        # Header
-        ws.append(["Day", "Irrigation", "Water (Litres)"])
+        # Column width
+        ws.column_dimensions['A'].width = 20
+        ws.column_dimensions['B'].width = 30
+        ws.column_dimensions['C'].width = 20
 
-        # Today
-        ws.append([
-            date.today().strftime("%A"),
-            data["alert"],
-            data["water_needed"]
-        ])
+        # ================= TITLE =================
+        ws.merge_cells('A1:C1')
+        title = ws['A1']
+        title.value = t["title"]
+        title.font = Font(bold=True, size=14, color="FFFFFF")
+        title.fill = PatternFill("solid", start_color="1B5E20")
+        title.alignment = Alignment(horizontal='center')
+        ws.row_dimensions[1].height = 30
 
-        # Next days
-        for d in data["week_prediction"][1:]:
-            ws.append([d["day"], d["irrigation"], d["water"]])
+        # ================= HEADERS =================
+        headers = [t["day"], t["irrigation"], t["water"]]
+        for col, h in enumerate(headers, 1):
+            cell = ws.cell(row=3, column=col, value=h)
+            style_header_cell(cell)
 
-        # Save to memory
+        # ================= TABLE DATA =================
+        row_idx = 4
+
+        # TRANSLATE ALERT (IMPORTANT FIX)
+        alert_raw = data.get("alert", "")
+
+        alert_map = {
+            "Irrigation Required Today": {
+                "hi": "आज सिंचाई आवश्यक है",
+                "mr": "आज सिंचन आवश्यक आहे"
+            },
+            "Irrigation Recommended Soon": {
+                "hi": "जल्द सिंचाई की सिफारिश",
+                "mr": "लवकरच सिंचन शिफारस"
+            },
+            "No Irrigation Needed": {
+                "hi": "सिंचाई की आवश्यकता नहीं",
+                "mr": "सिंचनाची गरज नाही"
+            }
+        }
+
+        if lang != "en" and alert_raw in alert_map:
+            alert_display = alert_map[alert_raw][lang]
+        else:
+            alert_display = alert_raw
+
+        # TODAY LABEL FIX
+        today_label_map = {
+            "en": "Today",
+            "hi": "आज",
+            "mr": "आज"
+        }
+
+        # TODAY ROW
+        dc = ws.cell(row=row_idx, column=1, value=today_label_map.get(lang, "Today"))
+        style_data_cell(dc, bg_color="E3F2FD", bold=True)
+
+        ic = ws.cell(row=row_idx, column=2, value=alert_display)
+        style_data_cell(ic, bold=True, bg_color="E3F2FD")
+
+        wc = ws.cell(row=row_idx, column=3, value=data["water_needed"])
+        style_data_cell(wc, bg_color="E3F2FD")
+
+        row_idx += 1
+
+        # NEXT 6 DAYS
+        for day_data in data["week_prediction"][1:]:
+
+            day_en = day_data["day"]
+            day_label = t["days"].get(day_en, day_en)
+
+            irr_en = day_data["irrigation"]
+
+            if irr_en == "Irrigation Required":
+                irr_label = t["irr_required"]
+                row_bg = "FFEBEE"
+                irr_color = "C62828"
+            else:
+                irr_label = t["no_irr"]
+                row_bg = "E8F5E9"
+                irr_color = "2E7D32"
+
+            dc = ws.cell(row=row_idx, column=1, value=day_label)
+            style_data_cell(dc, bg_color=row_bg)
+
+            ic = ws.cell(row=row_idx, column=2, value=irr_label)
+            style_data_cell(ic, bold=True, bg_color=row_bg, font_color=irr_color)
+
+            wc = ws.cell(row=row_idx, column=3, value=day_data["water"])
+            style_data_cell(wc, bg_color=row_bg)
+
+            row_idx += 1
+
+        # ================= GRAPH =================
+        row_idx += 2
+
+        ws.merge_cells(start_row=row_idx, start_column=1, end_row=row_idx, end_column=3)
+        gt = ws.cell(row=row_idx, column=1)
+        gt.value = t["graph_title"]
+        style_header_cell(gt)
+
+        BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+        graph_path = os.path.join(BASE_DIR, "static", "water_graph.png")
+
+        if os.path.exists(graph_path):
+            img = XLImage(graph_path)
+            img.width = 500
+            img.height = 300
+            ws.add_image(img, f"A{row_idx+1}")
+
+        # ================= SAVE =================
         file_stream = BytesIO()
         wb.save(file_stream)
         file_stream.seek(0)
 
+        filename_map = {
+            "en": "irrigation_report_en.xlsx",
+            "hi": "irrigation_report_hi.xlsx",
+            "mr": "irrigation_report_mr.xlsx"
+        }
+
         return send_file(
             file_stream,
             as_attachment=True,
-            download_name="irrigation_report.xlsx",
+            download_name=filename_map.get(lang, "irrigation_report.xlsx"),
             mimetype="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
         )
 
     except Exception as e:
         return f"Excel Error: {str(e)}"
-
-
-# ================= RUN =================
 
 if __name__ == '__main__':
     port = int(os.environ.get("PORT", 5000))
