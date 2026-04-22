@@ -1,5 +1,6 @@
-flask
+Flask
 numpy
 requests
-scikit-learn
+matplotlib
+openpyxl
 gunicorn
