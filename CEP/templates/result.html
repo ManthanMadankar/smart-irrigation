@@ -18,12 +18,12 @@ overflow-y:auto;scroll-behavior:smooth;
 padding:15px 50px;background:rgba(255,255,255,0.1);backdrop-filter:blur(10px);
 position:sticky;top:0;z-index:1000;}
 .logo{font-size:22px;font-weight:600;color:#4cff7a;}
-/* Nav links — same style as index.html */
 .nav-links a{margin:0 15px;text-decoration:none;color:white;transition:0.3s;}
 .nav-links a:hover{color:#4cff7a;}
 .lang{display:flex;gap:10px;}
 .lang button{padding:5px 10px;border:none;border-radius:6px;cursor:pointer;transition:all 0.3s ease;}
 .lang button:hover{background:#4cff7a;color:black;}
+.lang button.active{background:#4cff7a;color:black;font-weight:600;}
 .main{display:flex;justify-content:space-between;align-items:flex-start;padding:60px;min-height:85vh;}
 .block{flex:1;margin:20px;background:rgba(255,255,255,0.15);backdrop-filter:blur(15px);
 padding:30px;border-radius:20px;box-shadow:0 10px 30px rgba(0,0,0,0.5);}
@@ -36,6 +36,14 @@ padding:30px;border-radius:20px;box-shadow:0 10px 30px rgba(0,0,0,0.5);}
 .irrigation-green{color:#4cff7a;font-size:22px;font-weight:bold;}
 .back-btn{position:fixed;bottom:25px;left:25px;color:white;font-size:18px;text-decoration:none;}
 canvas{margin-top:20px;}
+.download-btn{
+  display:inline-block; margin-top:15px;
+  background:#4cff7a; color:black;
+  padding:12px 20px; border-radius:8px;
+  text-decoration:none; font-weight:600;
+  transition: background 0.2s;
+}
+.download-btn:hover{background:#39e86b;}
 </style>
 </head>
 <body>
@@ -49,9 +57,9 @@ canvas{margin-top:20px;}
     <a href="#report" id="reportNav">Report</a>
   </div>
   <div class="lang">
-    <button onclick="setLang('en')">EN</button>
-    <button onclick="setLang('hi')">हिंदी</button>
-    <button onclick="setLang('mr')">मराठी</button>
+    <button onclick="setLang('en')" id="btn-en" class="active">EN</button>
+    <button onclick="setLang('hi')" id="btn-hi">हिंदी</button>
+    <button onclick="setLang('mr')" id="btn-mr">मराठी</button>
   </div>
 </div>
 
@@ -144,9 +152,9 @@ canvas{margin-top:20px;}
   <div class="block" style="text-align:center;">
     <h2 id="downloadTitle">Report</h2>
     <a id="downloadBtn"
-       href="{{ url_for('download_excel') }}"
-       style="display:inline-block; margin-top:15px; background:#4cff7a; color:black; padding:12px 20px; border-radius:8px; text-decoration:none;">
-       Download Excel Report
+       href="{{ url_for('download_excel') }}?lang=en"
+       class="download-btn">
+        Download Excel Report
     </a>
   </div>
 </div>
@@ -155,6 +163,8 @@ canvas{margin-top:20px;}
 
 <!-- LANGUAGE SCRIPT -->
 <script>
+let currentLang = 'en';
+
 const langData = {
   en: {
     homeNav:      "Home",
@@ -174,7 +184,7 @@ const langData = {
     irrCol:       "Irrigation",
     waterCol:     "Water",
     graphTitle:   "Water Requirement Graph",
-    downloadBtn:  "Download Excel Report",
+    downloadBtn:  "📥 Download Excel Report",
     downloadTitle:"Report",
     backBtn:      "← Back"
   },
@@ -196,7 +206,7 @@ const langData = {
     irrCol:       "सिंचाई",
     waterCol:     "पानी",
     graphTitle:   "पानी की आवश्यकता ग्राफ",
-    downloadBtn:  "एक्सेल रिपोर्ट डाउनलोड करें",
+    downloadBtn:  "📥 एक्सेल रिपोर्ट डाउनलोड करें",
     downloadTitle:"रिपोर्ट",
     backBtn:      "← वापस"
   },
@@ -218,14 +228,20 @@ const langData = {
     irrCol:       "सिंचन",
     waterCol:     "पाणी",
     graphTitle:   "पाण्याची गरज ग्राफ",
-    downloadBtn:  "एक्सेल अहवाल डाउनलोड करा",
+    downloadBtn:  "📥 एक्सेल अहवाल डाउनलोड करा",
     downloadTitle:"अहवाल",
     backBtn:      "← मागे"
   }
 };
 
 function setLang(lang) {
+  currentLang = lang;
   const d = langData[lang];
+
+  // Update active button style
+  ['en','hi','mr'].forEach(l => {
+    document.getElementById('btn-' + l).classList.toggle('active', l === lang);
+  });
 
   // Navbar links
   document.getElementById("homeNav").innerText      = d.homeNav;
@@ -273,10 +289,11 @@ function setLang(lang) {
   });
   document.querySelectorAll(".water-cell").forEach(cell => {
     const val = cell.getAttribute("data-value");
-    cell.innerText = val + " " + (lang === "en" ? "L" : "ली.");
+    const unit = lang === "en" ? "L" : "ली.";
+    cell.innerText = val + " " + unit;
   });
 
-  // Update Excel download link
+  // Update Excel download link with current language
   document.getElementById("downloadBtn").href = "/download_excel?lang=" + lang;
 }
 
