@@ -137,7 +137,7 @@ canvas{margin-top:20px;}
 <div class="main" id="report">
   <div class="block">
     <h2 id="graphTitle">Water Requirement Graph</h2>
-    <img src="{{ url_for('static', filename=graph) }}"
+    <img src="{{ url_for('static', filename=graph) }}?v={{ range(1,10000)|random }}"
          alt="Water Graph"
          style="width:100%; margin-top:10px; border-radius:10px;">
   </div>
