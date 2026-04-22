@@ -1,4 +1,4 @@
-🌐 Live Demo - https://smart-water-irrigation-zq81.onrender.com
+🌐 Live Demo - [https://smart-water-irrigation-zq81.onrender.com](https://smart-waterirrigation-7bk9.onrender.com)
 
 Smart Irrigation System using Machine Learning
 
