@@ -5,19 +5,24 @@ import requests
 from datetime import datetime, timedelta, date
 import os
 
-#  IMPORTANT for Render (no display server)
+# IMPORTANT for Render (no display server)
 import matplotlib
 matplotlib.use('Agg')
+
+# Excel in memory
+from io import BytesIO
+from openpyxl import Workbook
 
 app = Flask(__name__)
 app.secret_key = "smartirrigate_secret"
 
-#  Load model safely
+# Load model
 model_path = os.path.join(os.path.dirname(__file__), 'irrigation_model.pkl')
 with open(model_path, 'rb') as f:
     model = pickle.load(f)
 
 API_KEY = "4ad5dac7e80eaae2c8fee266fa35043e"
+
 
 # ================= WEATHER =================
 
@@ -166,18 +171,14 @@ def predict():
                 "water": water
             })
 
-        
+
         # ===== GRAPH =====
         import matplotlib.pyplot as plt
 
-        # Use BASE DIR (important for Render)
         BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-
-        # Ensure static folder exists
         static_dir = os.path.join(BASE_DIR, "static")
         os.makedirs(static_dir, exist_ok=True)
 
-        # Absolute path for saving
         graph_path = os.path.join(static_dir, "water_graph.png")
 
         days = [d["day"] for d in week_prediction]
@@ -188,10 +189,16 @@ def predict():
         plt.title("6-Day Irrigation Water Requirement")
         plt.xticks(rotation=30)
         plt.grid()
-
-        #  Important fix
         plt.savefig(graph_path, bbox_inches='tight')
         plt.close()
+
+
+        # ===== SAVE DATA FOR EXCEL =====
+        session['excel_data'] = {
+            "alert": alert,
+            "water_needed": water_needed,
+            "week_prediction": week_prediction
+        }
 
         return render_template(
             'result.html',
@@ -210,6 +217,50 @@ def predict():
 
     except Exception as e:
         return f"Error: {str(e)}"
+
+
+# ================= EXCEL DOWNLOAD =================
+
+@app.route('/download_excel')
+def download_excel():
+    try:
+        data = session.get('excel_data')
+
+        if not data:
+            return "Session expired. Please try again.", 400
+
+        wb = Workbook()
+        ws = wb.active
+        ws.title = "Irrigation Report"
+
+        # Header
+        ws.append(["Day", "Irrigation", "Water (Litres)"])
+
+        # Today
+        ws.append([
+            date.today().strftime("%A"),
+            data["alert"],
+            data["water_needed"]
+        ])
+
+        # Next days
+        for d in data["week_prediction"][1:]:
+            ws.append([d["day"], d["irrigation"], d["water"]])
+
+        # Save to memory
+        file_stream = BytesIO()
+        wb.save(file_stream)
+        file_stream.seek(0)
+
+        return send_file(
+            file_stream,
+            as_attachment=True,
+            download_name="irrigation_report.xlsx",
+            mimetype="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+        )
+
+    except Exception as e:
+        return f"Excel Error: {str(e)}"
 
 
 # ================= RUN =================
